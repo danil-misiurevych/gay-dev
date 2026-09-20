@@ -1,12 +1,13 @@
-/* Kroje pisma bundlowane lokalnie z plikow w src/fonts/ — zero zapytan
-   do Google Fonts, wiec gra dziala tez offline i w zipie dla Playgamy.
+/* Fonts are bundled locally from files in src/fonts/ — zero requests to
+   Google Fonts, so the game also works offline and inside a zip for Playgama.
 
-   Swiadomie tylko woff2, bez woff: fallback woff to okolo 100 kB martwego
-   balastu w paczce, a przegladarki bez obslugi woff2 nie istnieja juz
-   w ruchu mobilnym.
+   Deliberately woff2 only, no woff: the woff fallback is about 100 kB of dead
+   weight in the bundle, and browsers without woff2 support no longer exist in
+   mobile traffic.
 
-   Podzbiory latin-ext sa OBOWIAZKOWE — bez nich polskie znaki w interfejsie
-   ("Wznow", "Dlugosc", "czasteczek") leca na krój zastepczy. */
+   The latin-ext subsets are kept per D-007, which sized them for a Polish
+   interface. Now that the interface is in English they are worth revisiting
+   — that is a team decision, not a cleanup. */
 @font-face {
   font-family: "Chakra Petch";
   font-style: normal;
@@ -88,8 +89,8 @@
   unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;
 }
 
-/* Tokeny. Gra jest swiadomie jednomotywowa (ciemny ekran arcade) —
-   wlascicielem tych wartosci jest osoba od UX/UI, patrz docs/UI-SPEC.md. */
+/* Tokens. The game is deliberately single-theme (a dark arcade screen) —
+   these values are owned by the UX/UI person, see docs/UI-SPEC.md. */
 :root {
   --bg: #070912;
   --panel: rgba(14, 19, 38, .94);
@@ -130,8 +131,8 @@ body {
 
 [hidden] { display: none !important; }
 
-/* touch-action: none jest wymagane — bez tego przegladarka na telefonie
-   przechwytuje pionowy swipe jako przewijanie i ciecie w gore nie dziala. */
+/* touch-action: none is required — without it a phone browser captures a
+   vertical swipe as scrolling and slicing upwards does not work. */
 #stage { position: fixed; inset: 0; touch-action: none; }
 #gl, #fx { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
 #fx { pointer-events: none; }
@@ -181,6 +182,95 @@ button {
 button:hover { border-color: var(--violet); }
 button:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
 button[aria-pressed="true"] { background: var(--violet); border-color: var(--violet); color: #0B0E1C; }
+
+/* ---------------------------------------------------------------- recipe card */
+/* The customer's current order. Simplest possible version for M2 — a real
+   card is designed in M4, see docs/UI-SPEC.md. */
+#recipe {
+  position: fixed; left: 50%; transform: translateX(-50%);
+  top: calc(66px + env(safe-area-inset-top, 0px));
+  min-width: 156px; max-width: min(260px, 82vw);
+  padding: 9px 11px 10px;
+  background: linear-gradient(180deg, rgba(19, 26, 49, .92), rgba(10, 14, 28, .92));
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  pointer-events: none;
+  z-index: 3;
+}
+#recipe:empty { display: none; }
+.r-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--dim); font-weight: 600; margin-bottom: 6px;
+}
+/* What the extra cutting has been worth during this recipe. Dimmed at zero
+   rather than hidden: a counter that disappears is harder to read than one
+   that sits still. */
+.r-bonus {
+  font-family: var(--font-num); font-variant-numeric: tabular-nums;
+  font-size: 11px; letter-spacing: .04em; color: var(--teal);
+  margin-right: auto;
+}
+.r-bonus.zero { color: var(--dim); }
+
+.r-clock {
+  font-family: var(--font-num); font-variant-numeric: tabular-nums;
+  font-size: 11px; letter-spacing: .04em; color: var(--ink);
+}
+/* The deadline bar. Scaled with a transform rather than width so the update
+   stays on the compositor and costs nothing per frame. */
+.r-track {
+  height: 3px; margin-top: 8px; border-radius: 2px;
+  background: rgba(157, 124, 255, .16); overflow: hidden;
+}
+.r-bar {
+  height: 100%; width: 100%; transform-origin: left center;
+  background: var(--violet);
+  transition: background-color .2s linear;
+}
+#recipe.no-timer .r-clock, #recipe.no-timer .r-track { display: none; }
+#recipe.urgent { border-color: var(--bad); }
+#recipe.urgent .r-clock { color: var(--bad); }
+#recipe.urgent .r-bar { background: var(--bad); }
+.r-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 600; line-height: 1.7;
+}
+.r-name { flex: 1 1 auto; }
+.r-count {
+  font-family: var(--font-num); font-variant-numeric: tabular-nums;
+  color: var(--amber);
+}
+/* Done lines dim rather than disappear: the player has to keep seeing what
+   the whole recipe was, otherwise a reset comes as a surprise. */
+.r-row.done { color: var(--dim); }
+.r-row.done .r-count { color: var(--teal); }
+
+/* Shape glyphs. They repeat the 3D silhouette, which is what the player
+   actually tracks in flight — the name alone reads too slowly. */
+.g { flex: 0 0 auto; width: 11px; height: 11px; }
+.g-sphere { border-radius: 50%; }
+.g-box { border-radius: 1px; }
+.g-cone {
+  width: 0; height: 0; background: none !important;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 11px solid currentColor;
+}
+
+#recipe.bad { animation: r-bad .4s ease-out; }
+#recipe.good { animation: r-good .5s ease-out; }
+@keyframes r-bad {
+  0% { border-color: var(--bad); transform: translateX(-50%) translateY(-3px); }
+  100% { border-color: var(--line); transform: translateX(-50%); }
+}
+@keyframes r-good {
+  0% { border-color: var(--teal); transform: translateX(-50%) scale(1.04); }
+  100% { border-color: var(--line); transform: translateX(-50%) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #recipe.bad, #recipe.good { animation: none; }
+}
 
 /* ---------------------------------------------------------------- panel */
 #panel {
@@ -242,6 +332,14 @@ input[type=range]:focus-visible { outline: 2px solid var(--amber); outline-offse
   padding: 9px; resize: vertical; min-height: 130px;
 }
 
+.row.check {
+  display: flex; align-items: center; gap: 9px;
+  cursor: pointer; padding: 4px 0 2px;
+  color: var(--ink); text-transform: none; letter-spacing: 0;
+}
+.row.check input { width: 16px; height: 16px; accent-color: var(--violet); cursor: pointer; }
+.row.check input:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
 /* ---------------------------------------------------------------- intro */
 #intro {
   position: fixed; inset: auto 0 0 0;
@@ -259,7 +357,7 @@ input[type=range]:focus-visible { outline: 2px solid var(--amber); outline-offse
 }
 #intro.gone { opacity: 0; transition: opacity .5s ease; }
 
-/* Na telefonie przyciski schodza z pola gry do prawego dolnego rogu. */
+/* On a phone the buttons move out of the playfield into the bottom-right corner. */
 @media (max-width: 620px) {
   .tools {
     position: fixed; right: 12px; left: auto;

@@ -1,24 +1,24 @@
 /**
- * Platforma Playgama — SZKIELET DO UZUPELNIENIA.
+ * The Playgama platform — SKELETON, TO BE FILLED IN.
  *
- * UWAGA DLA AGENTA I DLA CZLOWIEKA: nie wypelniaj tego pliku z pamieci.
- * Nazwy metod SDK i sposob inicjalizacji zmieniaja sie miedzy wersjami,
- * a bledna integracja reklam jest jednym z czestszych powodow odrzucenia
- * gry przy weryfikacji. Otworz aktualna dokumentacje Playgamy, przepisz
- * wywolania stamtad i dopisz w docs/DECISIONS.md, z ktorej wersji SDK
- * korzystamy i kiedy zostala sprawdzona.
+ * NOTE FOR THE AGENT AND FOR THE HUMAN: do not fill this file in from memory.
+ * SDK method names and the way initialisation works change between versions,
+ * and a broken ad integration is one of the more common reasons a game is
+ * rejected during review. Open the current Playgama documentation, copy the
+ * calls from there, and record in docs/DECISIONS.md which SDK version we use
+ * and when it was checked.
  *
- * Kontrakt, ktory ten plik ma spelnic, jest zdefiniowany w ./index.js
- * i nie powinien sie zmieniac — jesli SDK wymaga czegos, czego w nim nie
- * ma, rozszerz interfejs, a nie obchodz go z zewnatrz.
+ * The contract this file has to satisfy is defined in ./index.js and should
+ * not change — if the SDK needs something the contract does not cover,
+ * extend the interface rather than working around it from outside.
  *
- * Do sprawdzenia przy integracji:
- *  - moment wywolania gameplayStart / gameplayStop (platformy wstrzymuja
- *    dzwiek i reklamy na tej podstawie),
- *  - czy interstitial wolno pokazac w trakcie rundy, czy tylko miedzy,
- *    i jaki jest minimalny odstep miedzy reklamami,
- *  - czy zapis postepu jest asynchroniczny i czy ma limit rozmiaru,
- *  - czy SDK wymaga ekranu startowego z gestem uzytkownika przed dzwiekiem.
+ * To check during integration:
+ *  - when gameplayStart / gameplayStop should be called (platforms suspend
+ *    sound and ads based on it),
+ *  - whether an interstitial may be shown during a round or only between
+ *    rounds, and what the minimum gap between ads is,
+ *  - whether saving progress is asynchronous and whether it has a size limit,
+ *  - whether the SDK requires a start screen with a user gesture before sound.
  */
 export function createPlaygamaPlatform() {
   let sdk = null;
@@ -27,8 +27,8 @@ export function createPlaygamaPlatform() {
     name: 'playgama',
 
     async ready() {
-      // TODO(M3): zaladuj i zainicjalizuj SDK zgodnie z aktualna dokumentacja.
-      // Dopoki sdk === null, wszystkie ponizsze metody degraduja sie bezpiecznie.
+      // TODO(M3): load and initialise the SDK per the current documentation.
+      // While sdk === null, every method below degrades safely.
       sdk = globalThis.playgama ?? null;
     },
 

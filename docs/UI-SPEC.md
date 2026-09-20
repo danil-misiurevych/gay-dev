@@ -1,96 +1,100 @@
-# Specyfikacja interfejsu
+# Interface specification
 
-Dokument dla osoby od UX/UI i dla jej agenta. Warstwa 2D gry jest w całości
-Twoja — HUD, ekrany, onboarding, mikrokopia.
+A document for the UX/UI person and their agent. The 2D layer of the game is
+entirely yours — HUD, screens, onboarding, microcopy.
 
-## Gdzie to mieszka w kodzie
+## Where it lives in the code
 
 ```
-src/styles.css        tokeny i cała warstwa wizualna
-index.html            struktura HUD-u
-src/ui/hud.js         wpisywanie wartości do liczników (nie wygląd)
-src/ui/overlay.js     ślad ostrza, błysk cięcia, wyskakujące punkty
-src/ui/tuning-panel.js panel strojenia (narzędzie zespołu, nie część gry)
+src/styles.css        tokens and the whole visual layer
+index.html            HUD structure
+src/ui/hud.js         writing values into the counters (not their looks)
+src/ui/overlay.js     blade trail, cut flash, score popups
+src/ui/tuning-panel.js the tuning panel (a team tool, not part of the game)
 ```
 
-Zmiana wyglądu HUD-u to zmiana w `styles.css` i `index.html`. Nie musisz
-dotykać JavaScriptu.
+Changing how the HUD looks is a change in `styles.css` and `index.html`. You do
+not have to touch JavaScript.
 
-## Tokeny
+## Tokens
 
-Zdefiniowane w `:root` w `src/styles.css`. Gra jest **świadomie jednomotywowa**
-— ciemny ekran, bez wersji jasnej. Powód jest rozgrywkowy: kontrast lecących
-obiektów wobec tła jest elementem czytelności, nie dekoracją.
+Defined in `:root` in `src/styles.css`. The game is **deliberately
+single-theme** — a dark screen, no light variant. The reason is a gameplay
+one: the contrast of flying objects against the background is part of
+readability, not decoration.
 
-| Token | Wartość | Rola |
+| Token | Value | Role |
 |---|---|---|
-| `--bg` | `#070912` | tło, najciemniejszy punkt |
-| `--ink` | `#ECEAFF` | tekst podstawowy |
-| `--dim` | `#8B89A9` | etykiety, tekst drugorzędny |
-| `--amber` | `#F2A93B` | akcent główny, punkty, wartości liczbowe |
-| `--violet` | `#9D7CFF` | akcent drugorzędny, combo, obramowania |
-| `--teal` | `#4FD1C5` | dane techniczne, podgląd hitboxów |
-| `--bad` | `#FF6B6B` | błąd, nietrafienie |
+| `--bg` | `#070912` | background, the darkest point |
+| `--ink` | `#ECEAFF` | primary text |
+| `--dim` | `#8B89A9` | labels, secondary text |
+| `--amber` | `#F2A93B` | primary accent, points, numeric values |
+| `--violet` | `#9D7CFF` | secondary accent, combos, borders |
+| `--teal` | `#4FD1C5` | technical data, hitbox preview |
+| `--bad` | `#FF6B6B` | error, a miss |
 
-Kroje: **Chakra Petch** (interfejs) i **Azeret Mono** (liczby). Pliki są
-lokalnie w `src/fonts/`, tylko `woff2`, podzbiory `latin` i `latin-ext`.
-**Nie usuwaj `latin-ext`** — bez niego polskie znaki lecą na krój zastępczy.
+Typefaces: **Chakra Petch** (interface) and **Azeret Mono** (numbers). The
+files are local, in `src/fonts/`, `woff2` only, `latin` and `latin-ext`
+subsets. The `latin-ext` subsets were required by the Polish interface
+(D-007); now that the interface is in English, dropping them is worth
+considering — but that is a team decision, recorded in `DECISIONS.md`, not a
+cleanup.
 
-Liczby, które się zmieniają, mają `font-variant-numeric: tabular-nums`. Bez tego
-licznik punktów drga przy każdej zmianie cyfry.
+Numbers that change carry `font-variant-numeric: tabular-nums`. Without it the
+score counter jitters on every digit change.
 
-## Zasady, które wynikają z tego, że to gra na telefon
+## Rules that follow from this being a phone game
 
-**1. Interfejs nie może zasłaniać pola gry.** Poniżej 620 px przyciski schodzą
-do prawego dolnego rogu. Góra ekranu to liczniki i nic więcej — obiekty lecą
-przez środek.
+**1. The interface must not cover the playfield.** Below 620 px the buttons
+move to the bottom-right corner. The top of the screen is counters and nothing
+else — objects fly through the middle.
 
-**2. Wszystko klikalne ma minimum 36 px wysokości.** Gracz trzyma telefon
-jedną ręką i celuje kciukiem.
+**2. Everything clickable is at least 36 px tall.** The player holds the phone
+in one hand and aims with a thumb.
 
-**3. `touch-action: none` na polu gry.** Bez tego przeglądarka przechwytuje
-pionowy swipe jako przewijanie strony i cięcie w górę przestaje działać.
-To nie jest detal — to całkowicie psuje sterowanie.
+**3. `touch-action: none` on the playfield.** Without it the browser captures
+a vertical swipe as page scrolling and slicing upwards stops working. This is
+not a detail — it breaks the controls completely.
 
-**4. Safe-area.** Wcięcia na notch i pasek gestów są obsłużone przez
-`env(safe-area-inset-*)`. Element przypięty do krawędzi musi dodawać ten
-margines do własnego paddingu, nie ustawiać `0`.
+**4. Safe area.** Insets for the notch and the gesture bar are handled with
+`env(safe-area-inset-*)`. An element pinned to an edge must add that margin to
+its own padding rather than setting `0`.
 
-**5. Feedback musi być natychmiastowy i widoczny peryferyjnie.** Gracz patrzy
-na obiekt, nie na licznik. Dlatego punkty pojawiają się **w miejscu cięcia**,
-a nie tylko w HUD-zie.
+**5. Feedback has to be immediate and visible peripherally.** The player is
+looking at the object, not at the counter. That is why points appear **at the
+place of the cut**, not only in the HUD.
 
-## Mikrokopia
+## Microcopy
 
-Język polski, forma bezosobowa lub druga osoba, bez wykrzykników. Przyciski
-mówią, co się stanie („Pauza", „Zamknij"), nie jak się nazywa stan.
+English, impersonal or second person, no exclamation marks. Buttons say what
+will happen ("Pause", "Close"), not the name of a state.
 
-Komunikat startowy jest jednym zdaniem i znika po pierwszym dotknięciu —
-onboarding w tej grze to jedno zdanie, bo mechanika jest jedna.
+The start message is one sentence and disappears after the first touch —
+onboarding in this game is one sentence, because there is one mechanic.
 
-## Do zaprojektowania
+## To be designed
 
-Kolejność wynika z [`ROADMAP.md`](ROADMAP.md):
+The order follows from [`ROADMAP.md`](ROADMAP.md):
 
-1. **Karta zamówienia** — najważniejszy element interfejsu w całej grze.
-   Musi pokazać wymagane składniki i upływający czas tak, żeby dało się to
-   odczytać kątem oka, w trakcie cięcia. To jest prawdziwe zadanie projektowe,
-   nie ozdoba.
-2. **Klient przy barze** — stan oczekiwania, zadowolenia, zniecierpliwienia.
-3. **Ekran końca rundy** — wynik, zachęta do powtórki, miejsce na reklamę
-   z nagrodą.
-4. **Ekran startowy** — wymagany przez platformy: dźwięk wolno włączyć dopiero
-   po geście użytkownika.
+1. **The order card** — the most important interface element in the whole
+   game. It has to show the required ingredients and the time running out in a
+   way that can be read out of the corner of an eye, mid-cut. This is a real
+   design problem, not an ornament.
+2. **The customer at the bar** — states of waiting, satisfaction, impatience.
+3. **End-of-round screen** — the result, an invitation to replay, a place for
+   a rewarded ad.
+4. **Start screen** — required by the platforms: sound may only be enabled
+   after a user gesture.
 
-Zanim zaczniesz projektować kartę zamówienia, przeczytaj `GDD.md` — kształt
-danych zamówienia decyduje o tym, co w ogóle da się pokazać.
+Before you start designing the order card, read `GDD.md` — the shape of the
+order data decides what can be shown at all.
 
-## Dostępność
+## Accessibility
 
-Nie jest to formalność w grze opartej na kolorze: część graczy nie odróżnia
-czerwieni od zieleni. Stąd zasada z `ART-SPEC.md` o różnicowaniu **jasnością**,
-nie odcieniem. Dotyczy tak samo interfejsu — stan „udane" i „nieudane" nie może
-różnić się wyłącznie barwą.
+This is not a formality in a game built on color: some players cannot tell red
+from green. Hence the rule in `ART-SPEC.md` about differentiating by
+**brightness**, not hue. It applies to the interface just the same — the
+"succeeded" and "failed" states must not differ by color alone.
 
-Fokus klawiaturowy ma widoczny stan (`:focus-visible`). Animacje respektują
+Keyboard focus has a visible state (`:focus-visible`). Animations respect
 `prefers-reduced-motion`.

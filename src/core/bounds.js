@@ -1,11 +1,11 @@
 /**
- * Granice swiata gry wyliczone z proporcji ekranu.
+ * World bounds derived from the screen aspect ratio.
  *
- * Zalozenie projektowe: gra musi wygladac tak samo na telefonie w pionie
- * (aspect ~0.46) i na desktopie (aspect ~1.8). Zamiast stalej odleglosci
- * kamery trzymamy stala minimalna SZEROKOSC widocznego swiata i cofamy
- * kamere tak, zeby sie zmiescila. Bez tego na telefonie pole gry robi sie
- * waskim kominem i obiekty wylatuja poza ekran.
+ * Design assumption: the game has to look the same on a phone in portrait
+ * (aspect ~0.46) and on a desktop (aspect ~1.8). Instead of a fixed camera
+ * distance we keep a fixed minimum visible WIDTH of the world and pull the
+ * camera back far enough to fit it. Without that, the playfield turns into
+ * a narrow chimney on a phone and objects fly off screen.
  */
 export const MIN_HALF_HEIGHT = 6;
 export const MIN_HALF_WIDTH = 5.2;
@@ -19,9 +19,9 @@ export function computeBounds(aspect) {
     aspect: a,
     halfW,
     halfH,
-    /** Ponizej tego Y obiekt uznajemy za nietrafiony. */
+    /** Below this Y an object counts as missed. */
     killY: -halfH - 2.2,
-    /** Odleglosc kamery od plaszczyzny z = 0 dla powyzszych granic. */
+    /** Camera distance from the z = 0 plane for the bounds above. */
     cameraZ: halfH / Math.tan((CAMERA_FOV / 2) * Math.PI / 180),
   };
 }

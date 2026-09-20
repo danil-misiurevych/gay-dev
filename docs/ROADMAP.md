@@ -1,72 +1,75 @@
-# Plan prac
+# Plan of work
 
-Kolejność nie jest przypadkowa i jest ważniejsza niż zawartość poszczególnych
-punktów.
+The order is not accidental and matters more than the contents of any
+individual item.
 
-## Dlaczego taka kolejność
+## Why this order
 
-Naturalnym odruchem zespołu będzie dopracowywanie cięcia — bo jest
-satysfakcjonujące, od razu widać efekt i każdy ma na to pomysł. Ryzyko jest
-konkretne: **za trzy tygodnie można mieć świetne cięcie i zero zamówień, czyli
-świetny klon.** Playgama odrzuciła poprzedni projekt zespołu za podobieństwo
-do katalogu.
+The team's natural instinct will be to refine the slicing — because it is
+satisfying, the effect is immediate and everybody has an idea for it. The risk
+is concrete: **in three weeks you can have excellent slicing and zero orders,
+i.e. an excellent clone.** Playgama rejected the team's previous project for
+resembling the catalogue.
 
-Dlatego warstwa zamówień powstaje przed jakimkolwiek polerowaniem. Brzydka,
-bez grafiki, w obecnym prototypie. Dopiero jeśli okaże się ciekawa, warto
-w to inwestować pracę czterech osób.
+That is why the orders layer is built before any polishing. Ugly, with no
+graphics, in the current prototype. Only if it turns out to be interesting is
+it worth investing four people's work into it.
 
-## M1 — fundament *(zrobione)*
+## M1 — foundation *(done)*
 
-- Mechanika cięcia, balistyka, punktacja z combo.
-- Podział na rdzeń i renderowanie, testy bez przeglądarki.
-- Panel strojenia parametrów na urządzeniu.
-- Build, CI, publikacja na GitHub Pages, budżet rozmiaru paczki.
+- Slicing mechanic, ballistics, scoring with combos.
+- Split between core and rendering, tests without a browser.
+- On-device parameter tuning panel.
+- Build, CI, publishing to GitHub Pages, bundle size budget.
 
-## M2 — warstwa zamówień *(następne, priorytet bezwzględny)*
+## M2 — orders layer *(next, absolute priority)*
 
-Cel: sprawdzić, czy pętla „klient chce X, tnij X, nie tnij Y" jest w ogóle
-ciekawa. **Bez grafiki, bez efektów, bez dźwięku.**
+Goal: find out whether the loop "the customer wants X, slice X, do not slice Y"
+is interesting at all. **No graphics, no effects, no sound.**
 
-- Typy składników — na razie odróżniane samym kolorem z istniejącej palety.
-- `src/core/orders.js`: zamówienie (1–2 składniki), cierpliwość, realizacja.
-- Kara za przecięcie niewłaściwego składnika.
-- Najprostsze możliwe pokazanie zamówienia w HUD — tekst wystarczy.
-- Rozstrzygnięcie otwartego pytania z `GDD.md`: czy przepuszczenie właściwego
-  składnika też karze.
+- Ingredient types — for now told apart by color from the existing palette.
+  *(Implemented as a catalog with primitive shapes as well — see D-009,
+  pending team confirmation.)*
+- `src/core/orders.js`: an order (1–2 ingredients), patience, fulfilment.
+- A penalty for slicing the wrong ingredient.
+- The simplest possible display of an order in the HUD — text is enough.
+- Settle the open question from `GDD.md`: whether letting the right ingredient
+  through is also penalised.
 
-**Bramka:** cały zespół gra i odpowiada na jedno pytanie — czy chce zagrać
-jeszcze raz. Jeśli nie, wracamy do konceptu, a nie do polerowania.
+**Gate:** the whole team plays and answers one question — do they want to play
+again. If not, we go back to the concept, not to polishing.
 
-## M3 — platforma
+## M3 — platform
 
-- Integracja SDK Playgamy (`src/platform/playgama.js`) z aktualnej dokumentacji.
-- Ekran startowy z gestem użytkownika (wymagany przez politykę dźwięku).
-- Interstitial między rundami, rewarded za wznowienie.
-- Zapis najlepszego wyniku.
-- Weryfikacja rozmiaru paczki wobec limitów platformy.
+- Playgama SDK integration (`src/platform/playgama.js`) from the current
+  documentation.
+- A start screen with a user gesture (required by autoplay policy for sound).
+- Interstitial between rounds, rewarded for continuing.
+- Storing the best score.
+- Verifying the bundle size against the platform limits.
 
-## M4 — grafika i oprawa
+## M4 — graphics and presentation
 
-Dopiero tutaj, świadomie.
+Only here, deliberately.
 
-- Modele składników wg [`ART-SPEC.md`](ART-SPEC.md).
-- Karta zamówienia i klient wg [`UI-SPEC.md`](UI-SPEC.md).
-- Tło baru.
-- Dźwięk.
+- Ingredient models per [`ART-SPEC.md`](ART-SPEC.md).
+- Order card and customer per [`UI-SPEC.md`](UI-SPEC.md).
+- Bar background.
+- Sound.
 
-## M5 — progresja i wydanie
+## M5 — progression and release
 
-- Rosnąca trudność, dystraktory, bomby.
-- Strojenie krzywej trudności na żywych sesjach.
-- YouTube Playables jako druga platforma.
+- Rising difficulty, distractors, bombs.
+- Tuning the difficulty curve on live sessions.
+- YouTube Playables as the second platform.
 
-## Rytm pracy
+## Working rhythm
 
-Tygodniowa pętla, dopasowana do tego, że wszyscy pracują na prywatnych limitach:
+A weekly loop, fitted to everyone working on personal limits:
 
 ```
-koncept na piśmie → zatwierdzenie → implementacja → wszyscy grają na linku → wnioski do DECISIONS.md
+concept in writing → approval → implementation → everyone plays the link → conclusions into DECISIONS.md
 ```
 
-Powierzchnią recenzji jest działająca gra pod opublikowanym linkiem, nie zrzuty
-ekranu i nie opisy.
+The review surface is the working game behind the published link, not
+screenshots and not descriptions.

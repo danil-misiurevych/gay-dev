@@ -1,22 +1,23 @@
 /**
- * ADAPTER PLATFORMY.
+ * PLATFORM ADAPTER.
  *
- * Gra ma trafic na Playgame i na YouTube Playables. Obie platformy maja
- * wlasne SDK, wlasne momenty na reklamy i wlasny zapis postepu. Gdyby te
- * wywolania byly wplecione w petle gry, utrzymywalibysmy dwie rozjezdzajace
- * sie wersje tej samej gry — a to jest najczestszy sposob, w jaki maly
- * zespol traci kontrole nad projektem przy drugiej platformie.
+ * The game is going to Playgama and to YouTube Playables. Both platforms
+ * have their own SDK, their own moments for ads and their own progress
+ * storage. If those calls were woven into the game loop we would be
+ * maintaining two slowly diverging versions of the same game — which is the
+ * most common way a small team loses control of a project on its second
+ * platform.
  *
- * Dlatego reszta kodu zna WYLACZNIE ten interfejs. Zadnego `if (playgama)`
- * poza tym katalogiem.
+ * So the rest of the code knows ONLY this interface. No `if (playgama)`
+ * outside this directory.
  *
  * @typedef {Object} Platform
  * @property {string}  name
- * @property {() => Promise<void>} ready        czekaj na gotowosc SDK
- * @property {() => void} gameplayStart          gracz zaczyna grac
- * @property {() => void} gameplayStop           pauza, koniec rundy, utrata fokusu
- * @property {() => Promise<boolean>} interstitial   reklama pelnoekranowa
- * @property {() => Promise<boolean>} rewarded       reklama za nagrode
+ * @property {() => Promise<void>} ready        wait until the SDK is ready
+ * @property {() => void} gameplayStart          the player starts playing
+ * @property {() => void} gameplayStop           pause, end of round, focus lost
+ * @property {() => Promise<boolean>} interstitial   full-screen ad
+ * @property {() => Promise<boolean>} rewarded       rewarded ad
  * @property {(data:object) => Promise<void>} save
  * @property {() => Promise<object|null>} load
  */

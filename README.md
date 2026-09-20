@@ -1,79 +1,85 @@
 # Slice Lab
 
-Gra przeglądarkowa: międzygalaktyczny bar, w którym gracz tnie lecące składniki,
-żeby realizować zamówienia obcych klientów. Cel: Playgama, następnie YouTube
-Playables. Monetyzacja wyłącznie reklamowa.
+A browser game: an intergalactic bar where the player slices flying
+ingredients to fill orders from alien customers. Target: Playgama, then
+YouTube Playables. Monetisation through ads only.
 
-**Stan projektu:** mechanika cięcia działa i daje się stroić na urządzeniu.
-Warstwa zamówień jeszcze nie istnieje — to następny kamień milowy i to ona ma
-odróżnić grę od klonów. Patrz [`docs/ROADMAP.md`](docs/ROADMAP.md).
+**Project state:** the slicing mechanic works and can be tuned on the device.
+The orders layer does not exist yet — that is the next milestone and the thing
+meant to set the game apart from the clones. See [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Start
 
-Wymagany Node 20 lub nowszy.
+Node 20 or newer required.
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173, dostępne też z telefonu w tej samej sieci
+npm run dev        # http://localhost:5173, also reachable from a phone on the same network
 ```
 
 ```bash
-npm test           # testy rdzenia, bez przeglądarki
-npm run build      # produkcyjna paczka w dist/
-npm run size       # budżet rozmiaru paczki
-npm run preview    # podgląd zbudowanej wersji
+npm test           # core tests, no browser
+npm run build      # production bundle in dist/
+npm run size       # bundle size budget
+npm run preview    # preview the built version
 ```
 
-W grze: `P` — pauza, `H` — podgląd hitboxów. Przycisk **Parametry** otwiera panel
-strojenia mechaniki na żywo; eksportuje ustawienia jako JSON do wklejenia
-w `config/tuning.js`.
+In game: `P` — pause, `H` — hitbox preview. The **Tuning** button opens a live
+panel for the mechanics; it exports settings as JSON to paste into
+`config/tuning.js`.
 
-## Struktura
+To test on a phone through a tunnel (ngrok, cloudflared), the host suffixes are
+already allowed in `vite.config.js` under `server.allowedHosts`.
+
+## Structure
 
 ```
-config/tuning.js       parametry rozgrywki — właściciel: gameplay
-src/core/              logika gry, bez Three.js i bez DOM, testowalna w node
-src/render/            Three.js: scena, obiekty, efekty
-src/input/             obsługa wskaźnika (mysz, dotyk, rysik)
-src/ui/                HUD, nakładka 2D, panel strojenia
-src/platform/          adapter platform (web, Playgama)
-src/fonts/             kroje pisma, lokalnie — zero zapytań na zewnątrz
-tests/                 testy rdzenia
-docs/                  dokumentacja — patrz niżej
-assets/                źródła i eksporty grafiki
-scripts/check-size.mjs kontrola budżetu paczki
+config/tuning.js       gameplay parameters — owner: gameplay
+config/ingredients.js  ingredient catalog — owner: gameplay
+src/core/              game logic, no Three.js and no DOM, testable in node
+src/render/            Three.js: scene, objects, effects
+src/input/             pointer handling (mouse, touch, stylus)
+src/ui/                HUD, 2D overlay, tuning panel
+src/platform/          platform adapter (web, Playgama)
+src/fonts/             fonts, local — zero outside requests
+tests/                 core tests
+docs/                  documentation — see below
+assets/                art sources and exports
+scripts/check-size.mjs bundle budget check
 ```
 
-## Dokumentacja
+## Documentation
 
-| Dokument | Dla kogo | O czym |
+| Document | For whom | About |
 |---|---|---|
-| [`CLAUDE.md`](CLAUDE.md) | każdy agent AI | zasady, których nie łamiemy |
-| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | dev | podział warstw, przepływ danych, wydajność |
-| [`docs/GDD.md`](docs/GDD.md) | gameplay | koncept, pętla rozgrywki, parametry |
-| [`docs/ART-SPEC.md`](docs/ART-SPEC.md) | art | kontrakt na modele i kolory |
-| [`docs/UI-SPEC.md`](docs/UI-SPEC.md) | UX/UI | HUD, tokeny, zasady interfejsu |
-| [`docs/AGENTS.md`](docs/AGENTS.md) | każdy | jak pracować ze swoim agentem w swojej roli |
-| [`docs/ROADMAP.md`](docs/ROADMAP.md) | wszyscy | kolejność prac i dlaczego taka |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | wszyscy | log decyzji |
+| [`CLAUDE.md`](CLAUDE.md) | every AI agent | the rules we do not break |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | dev | layer split, data flow, performance |
+| [`docs/GDD.md`](docs/GDD.md) | gameplay | concept, game loop, parameters |
+| [`docs/ART-SPEC.md`](docs/ART-SPEC.md) | art | the contract for models and colors |
+| [`docs/UI-SPEC.md`](docs/UI-SPEC.md) | UX/UI | HUD, tokens, interface rules |
+| [`docs/AGENTS.md`](docs/AGENTS.md) | everyone | how to work with your agent in your role |
+| [`docs/ROADMAP.md`](docs/ROADMAP.md) | everyone | the order of work and why |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | everyone | decision log |
 
-## Jak pracujemy
+## How we work
 
-Repozytorium jest jedynym źródłem prawdy. Ustalenie, którego nie ma w repo,
-nie istnieje — cztery osoby pracują z czterema agentami o osobnej pamięci
-i to jedyny sposób, żeby się nie rozjechać.
+The repository is the only source of truth. An agreement that is not in the
+repo does not exist — four people work with four agents with separate
+memories, and this is the only way not to drift apart.
 
-1. Koncept opisany na piśmie w `docs/GDD.md` → zatwierdzony przez zespół.
-2. Branch na zmianę, PR do `main`. Opis PR-a mówi **co i dlaczego**, nie jak.
-3. CI uruchamia testy, build i kontrolę rozmiaru. Czerwone CI = PR nie wchodzi.
-4. Merge do `main` publikuje na GitHub Pages automatycznie.
-5. Wszyscy grają na opublikowanym linku. Wnioski wracają do `docs/DECISIONS.md`.
+1. Concept written down in `docs/GDD.md` → approved by the team.
+2. A branch per change, a PR into `main`. The PR description says **what and
+   why**, not how.
+3. CI runs the tests, the build and the size check. Red CI = the PR does not land.
+4. A merge into `main` publishes to GitHub Pages automatically.
+5. Everyone plays on the published link. Conclusions go back into
+   `docs/DECISIONS.md`.
 
-Powierzchnią recenzji jest działająca gra pod linkiem, nie zrzuty ekranu.
+The review surface is the working game behind the link, not screenshots.
 
-## Publikacja
+## Publishing
 
-Po włączeniu GitHub Pages (Settings → Pages → Source: GitHub Actions) każdy
-merge do `main` wdraża `dist/` automatycznie. Build używa ścieżek względnych,
-więc ta sama paczka działa w podkatalogu na Pages, w korzeniu na Netlify
-i w zipie dla Playgamy.
+Once GitHub Pages is enabled (Settings → Pages → Source: GitHub Actions), every
+merge into `main` deploys `dist/` automatically. The build uses relative paths,
+so the same bundle works in a subdirectory on Pages, at the root on Netlify and
+in a zip for Playgama.

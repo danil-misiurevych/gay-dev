@@ -1,8 +1,8 @@
 /**
- * Platforma "web": zwykla strona, bez SDK. Sluzy do developmentu i do
- * hostowanych testow zespolu. Reklamy nie istnieja, postep leci do
- * localStorage. Wszystkie metody sa bezpieczne do wywolania zawsze —
- * dzieki temu kod gry nigdy nie sprawdza, na czym dziala.
+ * The "web" platform: a plain page, no SDK. Used for development and for the
+ * team's hosted tests. Ads do not exist and progress goes to localStorage.
+ * Every method is always safe to call — that is what keeps the game code
+ * from ever checking what it is running on.
  */
 const KEY = 'slicelab.save.v1';
 
@@ -15,7 +15,7 @@ export function createWebPlatform() {
     async interstitial() { return false; },
     async rewarded() { return false; },
     async save(data) {
-      try { localStorage.setItem(KEY, JSON.stringify(data)); } catch { /* prywatne okno */ }
+      try { localStorage.setItem(KEY, JSON.stringify(data)); } catch { /* private window */ }
     },
     async load() {
       try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch { return null; }

@@ -5,9 +5,9 @@ import { WHITE } from './geometry.js';
 const MAX_PARTICLES = 64;
 
 /**
- * Wybuchy czasteczek przy cieciu. Pulowane tak samo jak reszta.
- * Kazdy wybuch to jeden obiekt Points — jedno wywolanie rysowania
- * zamiast kilkunastu osobnych siatek.
+ * Particle bursts on a slice. Pooled like everything else.
+ * Each burst is a single Points object — one draw call instead of a dozen
+ * separate meshes.
  */
 export function createEffects({ scene }) {
   const active = [];
@@ -36,7 +36,7 @@ export function createEffects({ scene }) {
       const b = acquire();
       b.n = Math.min(MAX_PARTICLES, Math.round(tuning.burstCount));
       b.life = 0;
-      b.points.material.color.setHex(PALETTE[entity.colorIndex % PALETTE.length]);
+      b.points.material.color.setHex(PALETTE[entity.type.colorIndex % PALETTE.length]);
       b.points.material.color.lerp(WHITE, 0.35);
       b.points.material.opacity = 1;
       b.points.material.size = 0.1 + entity.radius * 0.18;

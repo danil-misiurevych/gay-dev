@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "Gra przegladarkowa: kosmiczny bar, ciecie skladnikow. Playgama / YouTube Playables.",
+  "description": "Browser game: a space bar, slicing ingredients. Playgama / YouTube Playables.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

@@ -1,9 +1,9 @@
 /**
- * HUD: liczniki na gorze ekranu.
+ * HUD: the counters at the top of the screen.
  *
- * Wlascicielem warstwy wizualnej HUD-u jest osoba od UX/UI — patrz
- * docs/UI-SPEC.md. Ten modul odpowiada wylacznie za wpisywanie wartosci
- * do istniejacych elementow, nie za ich wyglad.
+ * The visual layer of the HUD is owned by the UX/UI person — see
+ * docs/UI-SPEC.md. This module is responsible only for writing values into
+ * existing elements, not for how they look.
  */
 export function createHud(root) {
   const el = (id) => root.querySelector(`#${id}`);
@@ -25,11 +25,11 @@ export function createHud(root) {
 
     flashMiss() {
       nodes.missBox.classList.remove('flash');
-      void nodes.missBox.offsetWidth; // wymusza restart animacji
+      void nodes.missBox.offsetWidth; // forces the animation to restart
       nodes.missBox.classList.add('flash');
     },
 
-    /** Licznik FPS usredniany w oknie polsekundowym — chwilowe wahania sa bez znaczenia. */
+    /** FPS counter averaged over half a second — momentary jitter is meaningless. */
     tickFps(dt) {
       fpsAcc += dt;
       fpsFrames += 1;

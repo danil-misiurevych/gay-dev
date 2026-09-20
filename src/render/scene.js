@@ -1,18 +1,18 @@
 import * as THREE from 'three';
 import { CAMERA_FOV } from '../core/bounds.js';
 
-/** Poziomy jakosci = gorny limit device pixel ratio. Patrz docs/ARCHITECTURE.md. */
+/** Quality levels = upper cap on the device pixel ratio. See docs/ARCHITECTURE.md. */
 export const QUALITY = { high: 2, medium: 1.5, low: 1 };
 
 /**
- * Scena, kamera, swiatla i rzutowanie na ekran.
+ * Scene, camera, lights and screen projection.
  *
- * Swiatla: dwa kierunkowe plus hemisferyczne, zero punktowych. Powod jest
- * wydajnosciowy — koszt MeshStandardMaterial rosnie liniowo z liczba swiatel
- * i liczy sie per fragment, a na GPU telefonu to jeden z najdrozszych
- * elementow klatki. Swiatla kierunkowe zachowuja sie tez identycznie
- * niezaleznie od modelu oswietlenia Three.js, wiec nie trzeba przestrajac
- * scenu przy aktualizacji biblioteki.
+ * Lights: two directional plus one hemisphere, zero point lights. The reason
+ * is performance — the cost of MeshStandardMaterial grows linearly with the
+ * number of lights and is paid per fragment, which on a phone GPU is one of
+ * the most expensive parts of a frame. Directional lights also behave
+ * identically regardless of the Three.js lighting model, so updating the
+ * library does not mean retuning the scene.
  */
 export function createScene(canvas) {
   const renderer = new THREE.WebGLRenderer({
@@ -73,9 +73,9 @@ export function createScene(canvas) {
   const _b = { x: 0, y: 0 };
 
   /**
-   * Rzutuje obiekt rdzenia na ekran. To jest funkcja wstrzykiwana do
-   * rdzenia — jedyny kanal, przez ktory logika ciecia dowiaduje sie
-   * czegokolwiek o kamerze.
+   * Projects a core object onto the screen. This is the function injected
+   * into the core — the only channel through which slice logic learns
+   * anything about the camera.
    */
   function project(entity) {
     tmp.set(entity.pos.x, entity.pos.y, entity.pos.z);
@@ -90,9 +90,9 @@ export function createScene(canvas) {
   }
 
   /**
-   * Zamienia kierunek ruchu palca (px) na plaszczyzne ciecia w swiecie.
-   * Plaszczyzna zawiera kierunek swipe'a i kierunek patrzenia kamery;
-   * jej normalna jest osia, wzdluz ktorej rozjezdzaja sie polowki.
+   * Turns the finger movement direction (px) into a cut plane in the world.
+   * The plane contains the swipe direction and the camera view direction;
+   * its normal is the axis along which the halves fly apart.
    */
   function cutBasis(dirX, dirY, outCut, outNormal) {
     outCut.set(0, 0, 0)
@@ -103,9 +103,25 @@ export function createScene(canvas) {
     outNormal.crossVectors(outCut, camDir).normalize();
   }
 
+  const _n = new THREE.Vector3();
+  const _c = new THREE.Vector3();
+
+  /**
+   * The cut normal as plain numbers, for the core.
+   *
+   * The core decides how the pieces fly apart, and to do that it needs the
+   * cut plane in world space — but it must not learn what a camera is. So it
+   * is handed this function, exactly like `project`. Plain {x, y, z} rather
+   * than a THREE.Vector3, so nothing from Three.js crosses into src/core/.
+   */
+  function cutNormal(dirX, dirY) {
+    cutBasis(dirX, dirY, _c, _n);
+    return { x: _n.x, y: _n.y, z: _n.z };
+  }
+
   return {
     renderer, scene, camera, view,
-    resize, project, cutBasis,
+    resize, project, cutBasis, cutNormal,
     setQuality(level) {
       qualityCap = QUALITY[level] ?? QUALITY.high;
       renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio || 1, qualityCap));

@@ -1,138 +1,201 @@
-# Architektura
+# Architecture
 
-Dokument dla osoby od kodu i dla jej agenta.
+A document for the code person and their agent.
 
-## Główna decyzja: rdzeń oddzielony od renderowania
+## The main decision: core separated from rendering
 
 ```
-                    zdarzenia
+                     events
   ┌──────────┐   spawn/slice/miss   ┌────────────┐
-  │ src/core │ ───────────────────► │ src/render │──► Three.js ──► ekran
+  │ src/core │ ───────────────────► │ src/render │──► Three.js ──► screen
   │          │                      │  src/ui    │
-  │  logika  │ ◄─────────────────── │            │
+  │  logic   │ ◄─────────────────── │            │
   └──────────┘   project(entity)    └────────────┘
-                 segment ruchu            ▲
+                movement segment          ▲
                                           │
                                    ┌──────────────┐
                                    │  src/input   │  Pointer Events
                                    └──────────────┘
 ```
 
-`src/core/` nie importuje Three.js ani niczego z DOM. Nie jest to czystość dla
-samej czystości — daje trzy konkretne rzeczy:
+`src/core/` imports neither Three.js nor anything from the DOM. This is not
+purity for its own sake — it buys three concrete things:
 
-1. **Testy bez przeglądarki.** `npm test` uruchamia pełną pętlę gry w node
-   w ułamku sekundy. Regresja w detekcji cięcia albo w punktacji wychodzi
-   natychmiast, a nie po ręcznym klikaniu na telefonie.
-2. **Wymiana warstwy wizualnej bez ruszania logiki.** Proceduralne kule zostaną
-   zastąpione modelami. Rdzeń tego nie zauważy.
-3. **Druga platforma za rozsądną cenę.** Playgama i YouTube Playables różnią się
-   SDK, nie logiką. Gdyby wywołania SDK były wplecione w pętlę gry,
-   utrzymywalibyśmy dwie rozjeżdżające się wersje tej samej gry.
+1. **Tests without a browser.** `npm test` runs the full game loop in node in
+   a fraction of a second. A regression in slice detection or in scoring shows
+   up immediately, not after manual tapping on a phone.
+2. **Swapping the visual layer without touching logic.** The procedural solids
+   will be replaced by models. The core will not notice.
+3. **A second platform at a sane price.** Playgama and YouTube Playables
+   differ in SDK, not in logic. If the SDK calls were woven into the game
+   loop, we would be maintaining two diverging versions of the same game.
 
-### Jak kamera dostaje się do rdzenia
+### How the camera reaches the core
 
-Nie dostaje się. Rdzeń przyjmuje wstrzykniętą funkcję:
+It does not. The core takes an injected function:
 
 ```js
-project(entity) -> { x, y, r }   // piksele CSS
+project(entity) -> { x, y, r }   // CSS pixels
 ```
 
-To jedyny kanał, przez który logika cięcia wie cokolwiek o kamerze. W testach
-podstawiamy zastępcze rzutowanie i sprawdzamy detekcję bez renderera.
+That is the only channel through which slice logic knows anything about the
+camera. In tests we substitute a stand-in projection and check detection
+without a renderer.
 
-Analogicznie w drugą stronę: rdzeń emituje zdarzenie `slice` z kierunkiem
-swipe'a **w pikselach**, a warstwa renderowania zamienia go na płaszczyznę
-cięcia w świecie (`scene.cutBasis`).
+The same holds in the other direction: the core emits a `slice` event with the
+swipe direction **in pixels**, and the render layer turns it into a cut plane
+in the world (`scene.cutBasis`).
 
-## Detekcja cięcia
+## Slice detection
 
-Test odbywa się w przestrzeni ekranu: odcinek ruchu wskaźnika kontra okrąg
-wokół rzutowanego środka obiektu.
+The test happens in screen space: the pointer movement segment against a
+circle around the projected centre of the object.
 
-**Dlaczego odcinek, nie punkt.** Przy szybkim swipie na 60 Hz palec przeskakuje
-kilkadziesiąt pikseli między klatkami. Test punktowy przepuściłby obiekt leżący
-dokładnie na trasie ruchu — a gracz widziałby, że przeciągnął przez obiekt
-i nic się nie stało. Jest na to test: `tests/geometry.test.js`.
+**Why a segment, not a point.** During a fast swipe at 60 Hz the finger jumps
+tens of pixels between frames. A point test would let through an object
+sitting right on the path of the movement — and the player would see they
+dragged through an object and nothing happened. There is a test for it:
+`tests/geometry.test.js`.
 
-**Dlaczego przestrzeń ekranu, nie raycast w 3D.** Gracz celuje w to, co widzi —
-w koło na ekranie, nie w kulę w przestrzeni. Test ekranowy jest zgodny z jego
-intencją. Jest przy tym o rząd wielkości tańszy i daje się stroić jedną liczbą
-(`hitScale`), a to jest główna gałka odpowiadająca za to, czy gra „czuje się"
-uczciwie.
+**Why screen space, not a 3D raycast.** The player aims at what they see — a
+circle on the screen, not a sphere in space. A screen-space test matches their
+intent. It is also an order of magnitude cheaper and can be tuned with a
+single number (`hitScale`), which is the main knob deciding whether the game
+"feels" fair.
 
-**Próg prędkości** (`minSwipeSpeed`) istnieje po to, żeby nie dało się wygrać
-powolnym pełzaniem palcem po ekranie.
+**The speed threshold** (`minSwipeSpeed`) exists so the game cannot be won by
+slowly crawling a finger across the screen.
 
-## Cięcie i połówki
+## Ingredients
 
-Geometria połówek jest tworzona **raz** przy starcie, dla promienia 1.
-`SphereGeometry(phi 0..π)` daje półkulę z `z ≥ 0`, `(phi π..2π)` — `z ≤ 0`.
-Płaszczyzna cięcia to więc `z = 0`, a jej normalna to lokalna oś Z.
+Ingredient types are data, not code: `config/ingredients.js` describes each one
+as a record (id, name, shape, color, score, spawn weight, radius range). The core
+imports them through `src/core/ingredients.js`, which validates the catalog once,
+at startup.
 
-Przy cięciu liczymy w świecie:
+Every flying object comes from **one** factory, `createEntity({ type })`, and
+differs only by the type assigned to it. An entity holds a reference to the
+frozen catalog entry rather than copies of its fields — name, shape, color and
+score have a single source of truth. The core never interprets `shape` or
+`colorIndex`; it passes them to the render layer, which is what gives them
+meaning. That is why swapping the primitive solids for real models in M4 will not
+touch game logic.
 
-- `cut` — kierunek swipe'a przeniesiony na osie kamery,
-- `normal = cut × kierunekPatrzeniaKamery` — oś, wzdłuż której rozjeżdżają się
-  połówki.
+## Slicing, pieces and debris
 
-Całą połówkę obracamy kwaternionem tak, żeby lokalne `+Z` pokryło się z
-`normal`. Efekt: cięcie wygląda, jakby szło dokładnie wzdłuż ruchu palca,
-mimo że geometria jest zawsze ta sama. To świadoma alternatywa dla cięcia
-siatki w locie (CSG) — patrz `DECISIONS.md`.
+A cut splits an object into two pieces that the core simulates like anything
+else: `core/pieces.js` builds them, they have a hitbox, ballistics and a score,
+and they can be cut again down to the depth the multiplier table in
+`config/slicing.js` defines. Two rules keep them from taking the game over —
+a piece never advances a recipe and never counts as a miss. Both are in
+`DECISIONS.md`, D-015, along with why halves stopped being a view-layer effect.
 
-Ścianka przekroju ma własną emisję. Płaska powierzchnia potrafi być odwrócona
-od wszystkich świateł i renderować się niemal czarna, a to właśnie ona jest
-sygnałem zwrotnym „cięcie się udało".
+What is left after the last allowed cut **is** still a view-layer effect: pure
+debris, faded out by `entity-view.js`, never simulated.
 
-**Połówki żyją poza rdzeniem.** Są czysto wizualne, nie wpływają na rozgrywkę
-i nie ma sensu, żeby rdzeń je symulował.
+The core decides how pieces fly apart, so it needs the cut plane in world
+space — but it must not learn what a camera is. So the render layer injects
+`cutNormal(dirX, dirY) -> { x, y, z }` into `trySlice`, exactly like
+`project`. Without it the core falls back to a straight-on camera, which is
+also what the tests run against.
 
-## Wydajność
+A fresh piece is un-cuttable for `pieceArmTime` seconds. It appears where the
+pointer already is, so without that window the same swipe shreds it on its
+next movement sample.
 
-Cel: 60 FPS na średnim telefonie z ostatnich trzech lat. Dźwignie, w kolejności
-od najskuteczniejszej:
+Half geometry is built **once** at startup, for radius 1.
+Every shape provides the same set of five solids: `full`, `halfA` (`z ≥ 0`),
+`halfB` (`z ≤ 0`) and the cut faces `capA`/`capB`. The cut plane is therefore
+always the same — `z = 0`, normal along Z — whatever the solid, and
+`entity-view.js` carries no per-shape `if`.
 
-| Dźwignia | Efekt | Gdzie |
+`SphereGeometry(phi 0..π)` gives the `z ≥ 0` hemisphere, `(phi π..2π)` the
+`z ≤ 0` one. A cone splits along its `theta` parameter, i.e. the `x = 0` plane, so the
+finished half is rotated −90° around Y. A cube half is simply a flatter box.
+Details and limitations: `DECISIONS.md`, D-010.
+
+## Orders layer
+
+`src/core/orders.js` holds the recipes: what the customer is asking for right
+now, what has already been sliced, and what a wrong slice does. Settings are
+in `config/recipes.js`.
+
+The layer is deliberately passive — it knows nothing about scoring, rendering
+or the HUD. `onIngredientSliced(typeId)` returns the outcome of a slice and
+`update(dt)` returns one when the timer runs out; the core turns both into a
+`recipe` event carrying a signed `gain`, and the UI subscribes to it. That is
+why score is moved by the core and not by the orders layer: scoring has
+exactly one owner.
+
+A recipe is worth the sum of its ingredients and is on a clock — filling it
+pays that value, letting it expire costs the same. Details and the deliberate
+omissions are in `DECISIONS.md`, D-012 and D-013.
+
+## Launching objects
+
+`core/spawner.js` launches from below and from the side edges, in the
+proportion set by `sideSpawnRatio`, and steers the draw between what the
+current recipe still needs and what it must not have (`recipeBias`, formula in
+`DECISIONS.md`, D-019).
+It asks the orders layer for that progress rather than holding a copy of the
+recipe, so there is still exactly one place that knows what the customer
+wants. Both aim at the SAME apex: the launch
+speed is derived from the target apex (`launchSpeedForApex`), never written
+down directly.
+
+That is a design decision, not a mathematical convenience. "The object should
+reach 42% of the screen height" is a parameter the gameplay person
+understands and can tune; "speed 14.7 u/s" means nothing to them and changes
+meaning with every change of gravity. It also keeps the two entry edges
+feeling like one game — see `DECISIONS.md`, D-014.
+
+## Performance
+
+Target: 60 FPS on a mid-range phone from the last three years. The levers, in
+order of effectiveness:
+
+| Lever | Effect | Where |
 |---|---|---|
-| Limit device pixel ratio | 2 → 1.5 to ok. 44% mniej fragmentów | `render/scene.js`, panel |
-| Liczba świateł | koszt liczony per fragment × liczba świateł | `render/scene.js` |
-| Liczba cząsteczek | przezroczysty overdraw | `config/tuning.js` |
-| Liczba obiektów naraz | liniowo | `config/tuning.js` |
+| Device pixel ratio cap | 2 → 1.5 is about 44% fewer fragments | `render/scene.js`, panel |
+| Number of lights | cost is per fragment × number of lights | `render/scene.js` |
+| Number of particles | transparent overdraw | `config/tuning.js` |
+| Objects on screen at once | linear | `config/tuning.js` |
 
-Świadomie używamy dwóch świateł kierunkowych i jednego hemisferycznego, zero
-punktowych: światła kierunkowe zachowują się identycznie niezależnie od modelu
-oświetlenia Three.js, więc aktualizacja biblioteki nie wymaga przestrajania sceny.
+We deliberately use two directional lights and one hemisphere light, zero
+point lights: directional lights behave identically regardless of the Three.js
+lighting model, so updating the library does not require retuning the scene.
 
-**FPS nie jest wartością, którą się podkręca.** `requestAnimationFrame` jest
-zsynchronizowany z odświeżaniem ekranu — sufit to fizyczny refresh panelu.
-Stabilne 30 na iPhonie zwykle oznacza tryb oszczędzania energii, a nie problem
-z kodem. Zanim zaczniesz optymalizować, ustal, czy budżet klatki jest faktycznie
-przekroczony.
+**FPS is not a value you crank up.** `requestAnimationFrame` is synchronised
+with the display refresh — the ceiling is the panel's physical refresh rate.
+A steady 30 on an iPhone usually means power-saving mode, not a problem in the
+code. Before you start optimising, establish whether the frame budget is
+actually being exceeded.
 
-**Zero alokacji w pętli.** Siatki, połówki i wybuchy cząsteczek są pulowane.
-Dopisując efekt, dopisz pulę.
+**Zero allocation in the loop.** Meshes, halves and particle bursts are
+pooled. When you add an effect, add its pool.
 
-## Budżet paczki
+## Bundle budget
 
-`npm run size` liczy rozmiar `dist/` po gzipie i wywala się po przekroczeniu
-limitu. Limity są w `scripts/check-size.mjs`.
+`npm run size` measures the size of `dist/` after gzip and fails once a limit
+is exceeded. The limits are in `scripts/check-size.mjs`.
 
-Three.js po tree-shakingu to obecnie ok. 115 kB gzip — cała biblioteka bez
-tree-shakingu miałaby ok. 600 kB nieskompresowane. Stąd bundler od pierwszego
-dnia, a nie „kiedyś później".
+Three.js after tree-shaking is currently about 115 kB gzip — the whole library
+without tree-shaking would be about 600 kB uncompressed. Hence a bundler from
+day one rather than "some time later".
 
-Trzymamy tylko `woff2`, bez `woff`: fallback to ok. 100 kB martwego balastu,
-a przeglądarki bez obsługi `woff2` praktycznie nie występują w ruchu mobilnym.
+We keep only `woff2`, no `woff`: the fallback is about 100 kB of dead weight,
+and browsers without `woff2` support are practically absent from mobile
+traffic.
 
-## Warstwa platformy
+## Platform layer
 
-`src/platform/index.js` definiuje interfejs, którego trzyma się reszta kodu.
-`web.js` to implementacja bez SDK (development i testy zespołu). `playgama.js`
-jest szkieletem — **nie wypełniaj go z pamięci**, patrz komentarz w pliku.
+`src/platform/index.js` defines the interface the rest of the code sticks to.
+`web.js` is the implementation without an SDK (development and team testing).
+`playgama.js` is a skeleton — **do not fill it in from memory**, see the
+comment in the file.
 
-## Determinizm
+## Determinism
 
-`core/rng.js` to generator z ziarnem. Dzięki temu testy są powtarzalne, a przy
-zgłaszaniu buga można odtworzyć dokładnie ten sam przebieg rozgrywki. Ziarno
-trafia do konsoli w trybie deweloperskim.
+`core/rng.js` is a seeded generator. That makes tests repeatable, and when a
+bug is reported the exact same run can be replayed. The seed goes to the
+console in development mode.

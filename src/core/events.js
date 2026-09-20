@@ -1,7 +1,7 @@
 /**
- * Najprostszy mozliwy emiter zdarzen. Rdzen gry publikuje zdarzenia,
- * a warstwa renderowania i UI je subskrybuja — dzieki temu rdzen nigdy
- * nie siega do niczego wizualnego.
+ * The simplest possible event emitter. The game core publishes events and
+ * the render and UI layers subscribe to them, which is what keeps the core
+ * from ever reaching for anything visual.
  */
 export function createEmitter() {
   const map = new Map();

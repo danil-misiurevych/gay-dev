@@ -1,106 +1,111 @@
-# Instrukcje dla agentów AI
+# Instructions for AI agents
 
-Ten plik czyta **każdy** agent, niezależnie od tego, czyja to sesja. Jeśli
-pracujesz nad tym projektem, przeczytaj go w całości przed pierwszą zmianą.
+**Every** agent reads this file, whoever's session it is. If you are working on
+this project, read it in full before your first change.
 
-## Dlaczego ten plik istnieje
+## Why this file exists
 
-Nad projektem pracują cztery osoby, każda z własnym agentem. Każdy agent ma
-osobną pamięć i po kilku dniach „wie" co innego niż pozostałe trzy. Repozytorium
-jest jedynym wspólnym źródłem prawdy — nie czyjaś rozmowa, nie ustalenie na
-czacie, nie to, co pamiętasz z poprzedniej sesji.
+Four people work on this project, each with their own agent. Every agent has
+its own separate memory, and after a few days each one "knows" something
+different from the other three. The repository is the only shared source of
+truth — not somebody's conversation, not an agreement in a chat, not what you
+remember from a previous session.
 
-Praktyczny wniosek dla Ciebie: **czytaj repo zamiast pytać o kontekst.**
-Odpowiedź na „dlaczego to jest zrobione tak" prawie zawsze jest w
-`docs/DECISIONS.md` albo w komentarzu nad kodem.
+The practical consequence for you: **read the repo instead of asking for
+context.** The answer to "why is this done this way" is almost always in
+`docs/DECISIONS.md` or in a comment above the code.
 
-## Czym jest projekt
+## What the project is
 
-Gra przeglądarkowa: międzygalaktyczny bar, w którym gracz tnie lecące składniki
-(swipe, mechanika pokrewna Fruit Ninja), żeby realizować zamówienia obcych
-klientów. Cel publikacji: Playgama, następnie YouTube Playables. Monetyzacja:
-wyłącznie reklamy.
+A browser game: an intergalactic bar where the player slices flying
+ingredients (swipe, a mechanic related to Fruit Ninja) to fill orders from
+alien customers. Publication target: Playgama, then YouTube Playables.
+Monetisation: ads only.
 
-Stan: mechanika cięcia działa. Warstwa zamówień — czyli to, co ma odróżnić grę
-od klonów — jeszcze nie istnieje. Patrz `docs/ROADMAP.md`.
+State: the slicing mechanic works. The orders layer — the thing meant to set
+the game apart from the clones — does not exist yet. See `docs/ROADMAP.md`.
 
-## Zasady architektury, których nie łamiemy
+## Architecture rules we do not break
 
-**1. `src/core/` nie zna Three.js ani DOM.**
-Żadnego importu `three`, `window`, `document` w `src/core/`. Rdzeń jest czystą
-logiką i musi dać się uruchomić w node bez przeglądarki — na tym stoją testy.
-Kamera dostaje się do rdzenia wyłącznie przez wstrzykiwaną funkcję `project()`.
+**1. `src/core/` knows nothing about Three.js or the DOM.**
+No importing `three`, `window` or `document` in `src/core/`. The core is pure
+logic and must run in node without a browser — that is what the tests stand
+on. The camera reaches the core only through an injected `project()` function.
 
-**2. W pętli gry nie powstają nowe obiekty.**
-Siatki, połówki i cząsteczki są pulowane. Alokacja w pętli to nie kwestia
-mikrosekund — to przycinka od garbage collectora, którą na telefonie widać
-dokładnie w momencie cięcia, czyli w najgorszym możliwym. Jeśli dopisujesz
-efekt, dopisz też pulę.
+**2. No new objects are created in the game loop.**
+Meshes, halves and particles are pooled. Allocation in the loop is not a
+matter of microseconds — it is a garbage collector hitch, which on a phone is
+visible exactly at the moment of the cut, the worst possible one. If you add
+an effect, add its pool too.
 
-**3. Parametry odczucia mieszkają w `config/tuning.js`.**
-Nie wpisuj liczb regulujących rozgrywkę do kodu. Właścicielem tego pliku jest
-osoba od gameplayu i musi móc go zmieniać bez dewelopera.
+**3. Feel parameters live in `config/tuning.js`.**
+Do not write numbers that regulate gameplay into the code. That file is owned
+by the gameplay person and they have to be able to change it without a
+developer.
 
-**4. Kod platformy tylko w `src/platform/`.**
-Żadnego `if (playgama)` poza tym katalogiem. Gra trafi na dwie platformy i to
-jest jedyny sposób, żeby nie utrzymywać dwóch wersji.
+**4. Platform code only in `src/platform/`.**
+No `if (playgama)` outside that directory. The game ships to two platforms and
+this is the only way to avoid maintaining two versions.
 
-**5. Nie wypełniaj `src/platform/playgama.js` z pamięci.**
-Nazwy metod SDK zmieniają się między wersjami, a błędna integracja reklam jest
-częstym powodem odrzucenia gry przy weryfikacji. Otwórz aktualną dokumentację,
-przepisz stamtąd i dopisz w `docs/DECISIONS.md`, której wersji SDK dotyczy.
+**5. Do not fill in `src/platform/playgama.js` from memory.**
+SDK method names change between versions, and a broken ad integration is a
+common reason for a game to be rejected during review. Open the current
+documentation, copy from there, and record in `docs/DECISIONS.md` which SDK
+version it refers to.
 
-## Zanim powiesz, że skończyłeś
+## Before you say you are done
 
 ```bash
-npm test          # testy rdzenia, bez przeglądarki
-npm run build     # musi przejść
-npm run size      # budżet rozmiaru paczki
+npm test          # core tests, no browser
+npm run build     # must pass
+npm run size      # bundle size budget
 ```
 
-Nie raportuj ukończenia zadania, jeśli którekolwiek z tych trzech nie przechodzi.
-Jeśli podniosłeś limit rozmiaru w `scripts/check-size.mjs`, uzasadnij to wpisem
-w `docs/DECISIONS.md` — wzrost paczki ma być decyzją, nie przypadkiem.
+Do not report a task as finished if any of these three fails. If you raised
+the size limit in `scripts/check-size.mjs`, justify it with an entry in
+`docs/DECISIONS.md` — bundle growth is meant to be a decision, not an accident.
 
-## Decyzje zapisujemy
+## We write decisions down
 
-Każda decyzja, o którą ktoś mógłby zapytać „czemu tak", trafia do
-`docs/DECISIONS.md`. Wpis to trzy linijki: data, decyzja, uzasadnienie.
-To wygląda na biurokrację dokładnie do momentu, w którym trzecia osoba pyta
-o to samo po raz trzeci.
+Every decision somebody could ask "why this way" about goes into
+`docs/DECISIONS.md`. An entry is three lines: date, decision, rationale.
+This looks like bureaucracy right up to the moment a third person asks the
+same question for the third time.
 
-Nie zmieniaj decyzji już zapisanej bez zgody człowieka. Jeśli uważasz, że
-decyzja była błędna — powiedz to, podaj argumenty i poczekaj.
+Do not change a decision that has already been recorded without a human's
+agreement. If you believe a decision was wrong — say so, give your arguments,
+and wait.
 
-## Czego nie robić
+## What not to do
 
-- Nie dopisuj funkcji rozgrywki „przy okazji". Zakres wynika z `docs/ROADMAP.md`
-  i z zatwierdzonego wpisu w `docs/GDD.md`.
-- Nie polerowuj efektów cięcia, dopóki nie działa warstwa zamówień. Uzasadnienie
-  jest w `docs/ROADMAP.md` i jest to najważniejsza decyzja produktowa w projekcie.
-- Nie dodawaj zależności bez potrzeby. Każda biblioteka to rozmiar paczki,
-  a limit platformy jest twardy.
-- Nie przepisuj plików w całości, gdy wystarczy zmiana kilku linii. Duże diffy
-  są nieczytelne w recenzji i marnują tokeny wszystkich.
-- Nie commituj `showHit: true` ani innych ustawień debugowania.
+- Do not add gameplay features "while you are in there". Scope comes from
+  `docs/ROADMAP.md` and from an approved entry in `docs/GDD.md`.
+- Do not polish slice effects until the orders layer works. The rationale is
+  in `docs/ROADMAP.md` and it is the most important product decision in the
+  project.
+- Do not add dependencies without need. Every library is bundle size, and the
+  platform limit is hard.
+- Do not rewrite whole files when changing a few lines is enough. Large diffs
+  are unreadable in review and waste everyone's tokens.
+- Do not commit `showHit: true` or any other debug setting.
 
-## Ekonomia tokenów
+## Token economy
 
-Zespół pracuje na prywatnych limitach. Trzy nawyki, które realnie oszczędzają:
+The team works on personal limits. Three habits that genuinely save:
 
-1. Zacznij od przeczytania odpowiedniego dokumentu z `docs/`, zamiast odtwarzać
-   kontekst w rozmowie.
-2. Jedna długa sesja na obszar zamiast nowej sesji na każde pytanie.
-3. Małe, precyzyjne zmiany zamiast generowania dużych plików od nowa.
+1. Start by reading the relevant document in `docs/` instead of reconstructing
+   context in conversation.
+2. One long session per area rather than a new session per question.
+3. Small, precise changes instead of regenerating large files from scratch.
 
-## Kto czym się zajmuje
+## Who handles what
 
-| Obszar | Dokument | Pliki |
+| Area | Document | Files |
 |---|---|---|
-| Kod, architektura | `docs/ARCHITECTURE.md` | `src/`, `tests/`, `scripts/` |
-| Rozgrywka, strojenie | `docs/GDD.md` | `config/tuning.js` |
-| Grafika 3D, modele | `docs/ART-SPEC.md` | `assets/`, `src/render/palette.js` |
+| Code, architecture | `docs/ARCHITECTURE.md` | `src/`, `tests/`, `scripts/` |
+| Gameplay, tuning | `docs/GDD.md` | `config/tuning.js`, `config/ingredients.js` |
+| 3D art, models | `docs/ART-SPEC.md` | `assets/`, `src/render/palette.js` |
 | UI, HUD, UX | `docs/UI-SPEC.md` | `src/styles.css`, `src/ui/`, `index.html` |
-| Proces, kolejność prac | `docs/ROADMAP.md` | `docs/DECISIONS.md` |
+| Process, order of work | `docs/ROADMAP.md` | `docs/DECISIONS.md` |
 
-Szczegółowe instrukcje dla agenta w każdej z ról: `docs/AGENTS.md`.
+Detailed instructions for the agent in each role: `docs/AGENTS.md`.

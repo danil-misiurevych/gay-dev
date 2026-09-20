@@ -1,4 +1,4 @@
-name: Build i publikacja
+name: Build and deploy
 
 on:
   push:

@@ -1,12 +1,12 @@
 /**
- * Geometria 2D uzywana przez detekcje ciecia.
+ * 2D geometry used by slice detection.
  *
- * Kluczowa decyzja: test jest ODCINKIEM, nie punktem. Przy szybkim swipie
- * na 60 Hz palec przeskakuje kilkadziesiat pikseli miedzy klatkami i test
- * punktowy przepuscilby obiekt lezacy dokladnie na trasie ruchu.
+ * The key decision: the test uses a SEGMENT, not a point. During a fast
+ * swipe at 60 Hz the finger jumps tens of pixels between frames, and a point
+ * test would miss an object sitting right on the path of the movement.
  */
 
-/** Najmniejsza odleglosc punktu (px, py) od odcinka (ax,ay)-(bx,by). */
+/** Shortest distance from point (px, py) to segment (ax,ay)-(bx,by). */
 export function segmentPointDistance(ax, ay, bx, by, px, py) {
   const dx = bx - ax;
   const dy = by - ay;
@@ -16,12 +16,12 @@ export function segmentPointDistance(ax, ay, bx, by, px, py) {
   return Math.hypot(px - (ax + dx * t), py - (ay + dy * t));
 }
 
-/** Czy odcinek przecina okrag o srodku (cx, cy) i promieniu r. */
+/** Whether the segment crosses the circle centred at (cx, cy) with radius r. */
 export function segmentIntersectsCircle(ax, ay, bx, by, cx, cy, r) {
   return segmentPointDistance(ax, ay, bx, by, cx, cy) <= r;
 }
 
-/** Predkosc ruchu w px/ms. dtMs jest przycinane do >= 1, zeby nie dzielic przez zero. */
+/** Movement speed in px/ms. dtMs is clamped to >= 1 to avoid dividing by zero. */
 export function strokeSpeed(ax, ay, bx, by, dtMs) {
   return Math.hypot(bx - ax, by - ay) / Math.max(1, dtMs);
 }

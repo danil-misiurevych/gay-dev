@@ -1,17 +1,16 @@
 /**
- * Wejscie wskaznika: jeden kod obsluguje mysz, palec i rysik (Pointer Events).
+ * Pointer input: one code path for mouse, finger and stylus (Pointer Events).
  *
- * Dwie rzeczy, ktore latwo przeoczyc, a psuja odczucie na telefonie:
+ * Two things that are easy to miss and wreck the feel on a phone:
  *
- * 1. getCoalescedEvents() — przegladarka na telefonie probkuje dotyk czesciej
- *    niz odswieza ekran (czesto 120 lub 240 Hz przy 60 Hz obrazu) i domyslnie
- *    oddaje tylko ostatnia probke na klatke. Bez odczytania probek posrednich
- *    szybki swipe gubi po kilkadziesiat pikseli trasy i obiekty "przelatuja
- *    przez ostrze" bez trafienia.
+ * 1. getCoalescedEvents() — a phone browser samples touch more often than it
+ *    refreshes the screen (often 120 or 240 Hz against a 60 Hz display) and by
+ *    default hands over only the last sample per frame. Without reading the
+ *    intermediate samples, a fast swipe loses tens of pixels of its path and
+ *    objects "fly through the blade" without being hit.
  *
- * 2. touch-action: none na elemencie — bez tego przegladarka przechwytuje
- *    pionowe przeciagniecia jako przewijanie strony i ciecie w gore przestaje
- *    dzialac.
+ * 2. touch-action: none on the element — without it the browser captures
+ *    vertical drags as page scrolling and slicing upwards stops working.
  */
 export function createPointerInput(element, { onStrokeStart, onSegment, onStrokeEnd }) {
   const trail = [];
@@ -27,7 +26,7 @@ export function createPointerInput(element, { onStrokeStart, onSegment, onStroke
     down = true;
     trail.length = 0;
     trail.push(point(e));
-    try { element.setPointerCapture(e.pointerId); } catch { /* nieistotne */ }
+    try { element.setPointerCapture(e.pointerId); } catch { /* not important */ }
     onStrokeStart?.();
   }
 
@@ -59,7 +58,7 @@ export function createPointerInput(element, { onStrokeStart, onSegment, onStroke
   return {
     trail,
     get isDown() { return down; },
-    /** Usuwa punkty starsze niz lifeMs. Wywolywane raz na klatke przez rysowanie sladu. */
+    /** Drops points older than lifeMs. Called once per frame by the trail drawing. */
     prune(now, lifeMs) {
       while (trail.length && now - trail[0].t > lifeMs) trail.shift();
     },

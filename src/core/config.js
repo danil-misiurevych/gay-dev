@@ -2,22 +2,22 @@ import { DEFAULTS, RANGES, INTEGER_KEYS } from '../../config/tuning.js';
 
 export { DEFAULTS, RANGES };
 
-/** Swieza kopia wartosci domyslnych. */
+/** A fresh copy of the default values. */
 export function defaultTuning() {
   return { ...DEFAULTS };
 }
 
 /**
- * Scala nadpisania (z panelu strojenia albo z localStorage) z wartosciami
- * domyslnymi i przycina je do zakresow z RANGES.
+ * Merges overrides (from the tuning panel or from localStorage) with the
+ * defaults and clamps them to the ranges in RANGES.
  *
- * Przycinanie nie jest paranoja: panel zapisuje ustawienia w przegladarce
- * testera, a plik w repo zmienia sie niezaleznie. Bez tego stary zapis
- * z nieaktualnego builda potrafi wpuscic wartosc, ktorej kod juz nie
- * obsluguje — i tester zglasza buga, ktorego nikt inny nie odtworzy.
+ * The clamping is not paranoia: the panel stores settings in a tester's
+ * browser while the file in the repo changes independently. Without it, an
+ * old save from a stale build can feed in a value the code no longer handles
+ * — and the tester reports a bug nobody else can reproduce.
  *
- * Nieznane klucze sa ignorowane, zeby literowka w JSON-ie nie tworzyla
- * cichego, martwego parametru.
+ * Unknown keys are ignored so that a typo in the JSON cannot create a silent,
+ * dead parameter.
  */
 export function mergeTuning(overrides = {}) {
   const out = defaultTuning();

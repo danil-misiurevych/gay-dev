@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { findSliceHits } from '../src/core/slicing.js';
 import { createEntity, resetIds } from '../src/core/entities.js';
 
-/** Zastepcze rzutowanie: obiekt siedzi tam, gdzie mowi jego pozycja, promien 30 px. */
+/** Stand-in projection: an object sits where its position says, radius 30 px. */
 const project = (e) => ({ x: e.pos.x, y: e.pos.y, r: 30 });
 const tuning = { minSwipeSpeed: 0.3, hitScale: 1 };
 
@@ -14,31 +14,31 @@ function entityAt(x, y) {
   return e;
 }
 
-test('szybki swipe przez obiekt tnie', () => {
+test('a fast swipe through an object cuts it', () => {
   resetIds();
   const list = [entityAt(200, 300)];
   const hits = findSliceHits({ ax: 0, ay: 300, bx: 400, by: 300, dtMs: 100 }, list, project, tuning);
   assert.equal(hits.length, 1);
 });
 
-test('powolny ruch nie tnie, nawet gdy przechodzi przez srodek obiektu', () => {
-  // Bez progu predkosci dalo by sie wygrac trzymajac palec i pelzajac nim po ekranie.
+test('a slow movement does not cut, even straight through the centre of an object', () => {
+  // Without the speed threshold the game could be won by crawling a finger across the screen.
   resetIds();
   const list = [entityAt(200, 300)];
   const hits = findSliceHits({ ax: 0, ay: 300, bx: 400, by: 300, dtMs: 100000 }, list, project, tuning);
   assert.equal(hits.length, 0);
 });
 
-test('jedno pociagniecie tnie kilka obiektow naraz', () => {
+test('a single stroke cuts several objects at once', () => {
   resetIds();
   const list = [entityAt(100, 300), entityAt(250, 300), entityAt(380, 300)];
   const hits = findSliceHits({ ax: 0, ay: 300, bx: 400, by: 300, dtMs: 100 }, list, project, tuning);
   assert.equal(hits.length, 3);
 });
 
-test('mnoznik hitboxa poszerza trafienia', () => {
+test('the hitbox multiplier widens hits', () => {
   resetIds();
-  const list = [entityAt(200, 340)]; // 40 px od trasy, promien 30
+  const list = [entityAt(200, 340)]; // 40 px off the path, radius 30
   const strict = findSliceHits({ ax: 0, ay: 300, bx: 400, by: 300, dtMs: 100 }, list, project, tuning);
   const loose = findSliceHits({ ax: 0, ay: 300, bx: 400, by: 300, dtMs: 100 }, list, project,
     { ...tuning, hitScale: 1.5 });
@@ -46,7 +46,7 @@ test('mnoznik hitboxa poszerza trafienia', () => {
   assert.equal(loose.length, 1);
 });
 
-test('martwe obiekty sa pomijane', () => {
+test('dead objects are skipped', () => {
   resetIds();
   const e = entityAt(200, 300);
   e.alive = false;

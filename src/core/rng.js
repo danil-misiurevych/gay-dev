@@ -1,9 +1,9 @@
 /**
- * Deterministyczny generator liczb pseudolosowych (mulberry32).
+ * Deterministic pseudo-random number generator (mulberry32).
  *
- * Po co, skoro jest Math.random(): testy rdzenia musza byc powtarzalne,
- * a przy zglaszaniu buga chcemy moc odtworzyc dokladnie ten sam przebieg
- * rozgrywki z ziarna. Ziarno trafia do logow przy crashu.
+ * Why not Math.random(): core tests have to be repeatable, and when a bug is
+ * reported we want to be able to replay exactly the same run from its seed.
+ * The seed goes into the log on a crash.
  */
 export function createRng(seed = Date.now() >>> 0) {
   let a = seed >>> 0;
@@ -16,9 +16,9 @@ export function createRng(seed = Date.now() >>> 0) {
   return {
     seed,
     next,
-    /** Liczba zmiennoprzecinkowa z przedzialu [min, max). */
+    /** Float in the range [min, max). */
     range: (min, max) => min + next() * (max - min),
-    /** Liczba calkowita z przedzialu [min, max]. */
+    /** Integer in the range [min, max]. */
     int: (min, max) => Math.floor(min + next() * (max - min + 1)),
     pick: (arr) => arr[Math.floor(next() * arr.length)],
   };

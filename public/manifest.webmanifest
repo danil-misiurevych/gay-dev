@@ -1,8 +1,8 @@
 {
   "name": "Slice Lab",
   "short_name": "Slice Lab",
-  "description": "Kosmiczny bar: tnij składniki, realizuj zamówienia.",
-  "lang": "pl",
+  "description": "A space bar: slice ingredients, fill orders.",
+  "lang": "en",
   "start_url": "./",
   "scope": "./",
   "display": "fullscreen",

@@ -4,20 +4,20 @@ import { gzipSync } from 'node:zlib';
 import { readFileSync } from 'node:fs';
 
 /**
- * Budzet rozmiaru builda.
+ * Build size budget.
  *
- * Platformy z grami HTML5 maja twarde limity paczki, a przekroczenie
- * wychodzi dopiero przy wysylce — czyli w najgorszym momencie. Taniej
- * jest, zeby build sie wysypal przy commicie, ktory przekroczyl budzet,
- * niz zeby zespol dowiedzial sie o tym przy weryfikacji.
+ * HTML5 game platforms have hard bundle limits, and going over them only
+ * shows up at submission time — the worst possible moment. It is cheaper for
+ * the build to fail on the commit that broke the budget than for the team to
+ * find out during review.
  *
- * Limity sa celowo ciasne. Jesli przekroczenie jest uzasadnione, podnies
- * liczbe TU i dopisz powod w docs/DECISIONS.md — chodzi o to, zeby wzrost
- * byl decyzja, a nie przypadkiem.
+ * The limits are deliberately tight. If exceeding one is justified, raise the
+ * number HERE and record the reason in docs/DECISIONS.md — the point is that
+ * growth is a decision, not an accident.
  */
 const LIMITS = {
-  totalGzip: 700 * 1024,   // cala paczka po gzipie
-  singleGzip: 450 * 1024,  // najwiekszy pojedynczy plik po gzipie
+  totalGzip: 700 * 1024,   // the whole bundle, gzipped
+  singleGzip: 450 * 1024,  // the largest single file, gzipped
 };
 
 function walk(dir) {
@@ -35,7 +35,7 @@ let files;
 try {
   files = walk('dist');
 } catch {
-  console.error('Brak katalogu dist/. Uruchom najpierw: npm run build');
+  console.error('No dist/ directory. Run this first: npm run build');
   process.exit(1);
 }
 
@@ -43,26 +43,26 @@ files.sort((a, b) => b.gzip - a.gzip);
 const total = files.reduce((n, f) => n + f.gzip, 0);
 const kb = (n) => `${(n / 1024).toFixed(1)} kB`;
 
-console.log('Rozmiar builda (gzip):\n');
+console.log('Build size (gzip):\n');
 for (const f of files.slice(0, 12)) {
   console.log(`  ${kb(f.gzip).padStart(10)}  ${f.path}`);
 }
-console.log(`\n  ${kb(total).padStart(10)}  RAZEM (${files.length} plików)\n`);
+console.log(`\n  ${kb(total).padStart(10)}  TOTAL (${files.length} files)\n`);
 
 const problems = [];
 if (total > LIMITS.totalGzip) {
-  problems.push(`Całość ${kb(total)} przekracza budżet ${kb(LIMITS.totalGzip)}.`);
+  problems.push(`Total ${kb(total)} exceeds the budget of ${kb(LIMITS.totalGzip)}.`);
 }
 const biggest = files[0];
 if (biggest && biggest.gzip > LIMITS.singleGzip) {
-  problems.push(`Plik ${biggest.path} (${kb(biggest.gzip)}) przekracza limit ${kb(LIMITS.singleGzip)}.`);
+  problems.push(`File ${biggest.path} (${kb(biggest.gzip)}) exceeds the limit of ${kb(LIMITS.singleGzip)}.`);
 }
 
 if (problems.length) {
-  console.error('BUDŻET PRZEKROCZONY:');
+  console.error('SIZE BUDGET EXCEEDED:');
   for (const p of problems) console.error(`  - ${p}`);
-  console.error('\nAlbo zbij rozmiar, albo podnieś limit w scripts/check-size.mjs');
-  console.error('i dopisz uzasadnienie w docs/DECISIONS.md.');
+  console.error('\nEither bring the size down, or raise the limit in scripts/check-size.mjs');
+  console.error('and record the reason in docs/DECISIONS.md.');
   process.exit(1);
 }
-console.log('Budżet OK.');
+console.log('Budget OK.');

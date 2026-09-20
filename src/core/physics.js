@@ -1,8 +1,8 @@
 import { addScaled } from './vec3.js';
 
 /**
- * Balistyka. Jedno miejsce, w ktorym zyje calka ruchu — jesli kiedys
- * dojdzie opor powietrza albo wiatr w barze, zmienia sie tylko to.
+ * Ballistics. The one place where motion is integrated — if air drag or
+ * a draught in the bar ever shows up, this is the only file that changes.
  */
 export function integrate(entity, gravity, dt) {
   entity.vel.y -= gravity * dt;
@@ -13,13 +13,13 @@ export function integrate(entity, gravity, dt) {
   return entity;
 }
 
-/** Predkosc pionowa potrzebna, zeby z wysokosci fromY doleciec dokladnie do apexY. */
+/** Vertical speed needed to rise from fromY to exactly apexY. */
 export function launchSpeedForApex(gravity, fromY, apexY) {
   const rise = Math.max(0.01, apexY - fromY);
   return Math.sqrt(2 * gravity * rise);
 }
 
-/** Czas wznoszenia do apogeum dla danej predkosci poczatkowej. */
+/** Time to reach the apex for a given launch speed. */
 export function timeToApex(gravity, vy) {
   return vy / gravity;
 }

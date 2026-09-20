@@ -1,27 +1,28 @@
 import { segmentPointDistance, strokeSpeed } from './geometry2d.js';
+import { canSliceDepth } from './pieces.js';
 
 /**
- * Detekcja ciecia.
+ * Slice detection.
  *
- * Dlaczego test odbywa sie w PRZESTRZENI EKRANU, a nie w 3D raycastem:
- *  1. Gracz celuje w to, co widzi — kolo na ekranie, nie kule w przestrzeni.
- *     Test ekranowy jest wiec zgodny z intencja gracza, a raycast bywa
- *     "sprawiedliwy matematycznie, ale niesprawiedliwy w odczuciu".
- *  2. Jest o rzad wielkosci tanszy: jedna projekcja na obiekt na klatke
- *     zamiast przeciecia promienia z geometria.
- *  3. Mnoznik hitboxa daje sie stroic jedna liczba — a to jest glowna
- *     galka odpowiadajaca za to, czy gra "czuje sie" uczciwie.
+ * Why the test happens in SCREEN SPACE rather than as a 3D raycast:
+ *  1. The player aims at what they see — a circle on the screen, not a sphere
+ *     in space. A screen-space test therefore matches the player's intent,
+ *     while a raycast can be "mathematically fair but unfair to the feel".
+ *  2. It is an order of magnitude cheaper: one projection per object per
+ *     frame instead of intersecting a ray with geometry.
+ *  3. The hitbox multiplier can be tuned with a single number — and that is
+ *     the main knob deciding whether the game "feels" fair.
  *
- * Funkcja nie wie nic o kamerze ani o Three.js. Warstwa renderowania
- * wstrzykuje `project(entity) -> { x, y, r }` w pikselach CSS.
+ * This function knows nothing about the camera or Three.js. The render layer
+ * injects `project(entity) -> { x, y, r }` in CSS pixels.
  */
 
 /**
- * @param {object}   segment  { ax, ay, bx, by, dtMs } odcinek ruchu wskaznika
- * @param {Iterable} entities zywe obiekty
- * @param {Function} project  (entity) => { x, y, r } w px
+ * @param {object}   segment  { ax, ay, bx, by, dtMs } pointer movement segment
+ * @param {Iterable} entities live objects
+ * @param {Function} project  (entity) => { x, y, r } in px
  * @param {object}   tuning   { minSwipeSpeed, hitScale }
- * @returns {Array<{ entity, x, y, dirX, dirY }>} trafienia, od najnowszych
+ * @returns {Array<{ entity, x, y, dirX, dirY }>} hits, newest first
  */
 export function findSliceHits(segment, entities, project, tuning) {
   const { ax, ay, bx, by, dtMs } = segment;
@@ -34,6 +35,12 @@ export function findSliceHits(segment, entities, project, tuning) {
 
   for (const entity of entities) {
     if (!entity.alive) continue;
+    // A piece at the depth limit is debris: it still falls, but a swipe
+    // through it must not score, or the last level would pay for nothing.
+    if (!canSliceDepth(entity.depth)) continue;
+    // A piece that is not armed yet cannot be cut — without this, the same
+    // swipe that created it shreds it on the very next movement sample.
+    if (entity.arm > 0) continue;
     const p = project(entity);
     if (!p) continue;
     if (segmentPointDistance(ax, ay, bx, by, p.x, p.y) <= p.r * tuning.hitScale) {
